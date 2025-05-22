@@ -7,6 +7,7 @@ import Navbar from "../../_components/Navbar";
 
 export default function SignInPage() {
   const [userId, setUserId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +17,8 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (authLoaded && existingUserId) {
-      // If user is already signed in, redirect to dashboard
-      router.replace("/dashboard");
+      // If user is already signed in, redirect to user dashboard
+      router.replace("/user-dashboard");
     }
   }, [authLoaded, existingUserId, router]);
 
@@ -34,10 +35,15 @@ export default function SignInPage() {
         throw new Error("User ID must be exactly 10 digits (numbers only)");
       }
 
-      // Use the email to sign in since that's what Clerk knows about
+      // For Clerk, we need to use the email as the identifier
+      // In a real app, you would look up the email associated with the userId
+      // For now, we'll construct a dummy email from the userId
+      const emailToUse = email || `${userId}@ua.edu`;
+
+      // Use the email as the identifier for Clerk
       const attemptSignIn = await signIn.create({
         strategy: "password",
-        identifier: password,
+        identifier: emailToUse,
         password,
       });
 
@@ -72,7 +78,7 @@ export default function SignInPage() {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center bg-gradient-to-b from-blue-900 to-blue-800">
         <div className="bg-white p-8 rounded-lg shadow-lg">
-          <p>You are already signed in. Redirecting to dashboard...</p>
+          <p>You are already signed in. Redirecting to user dashboard...</p>
         </div>
       </div>
     );
@@ -99,13 +105,31 @@ export default function SignInPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-black font-bold mb-2">USER ID</label>
+              <label htmlFor="userId" className="block text-sm font-medium text-gray-700">
+                UA ID
+              </label>
               <input
+                id="userId"
                 type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                disabled={isLoading}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your 10-digit UA ID"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your email address"
                 required
               />
             </div>

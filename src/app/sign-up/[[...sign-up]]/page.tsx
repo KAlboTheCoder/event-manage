@@ -31,7 +31,7 @@ export default function SignUpPage() {
   useEffect(() => {
     if (authLoaded && existingUserId) {
       // If user is already signed in, redirect to dashboard
-      router.replace("/dashboard");
+      router.replace("/user-dashboard");
     }
   }, [authLoaded, existingUserId, router]);
 
@@ -48,8 +48,8 @@ export default function SignUpPage() {
         throw new Error("User ID must be exactly 10 digits (numbers only)");
       }
 
-      // Generate a valid username that will always be exactly 10 characters
-      const username = `u${userId.slice(0, 9)}`; // 'u' followed by first 9 digits of UA ID
+      // Generate a username using the full user ID
+      const username = `u_${userId}`; // 'u_' prefix followed by the full user ID
       
       // First check if a sign up exists and if so, continue with that
       const signUpAttempt = await signUp.create({
@@ -62,7 +62,7 @@ export default function SignUpPage() {
 
       if (signUpAttempt.status === "complete") {
         // Sign up is already complete, redirect to dashboard
-        router.replace("/dashboard");
+        router.replace("/user-dashboard");
         return;
       }
 
@@ -146,15 +146,15 @@ export default function SignUpPage() {
               
               if (session && session.userId) {
                 // Session is confirmed, do the redirect
-                window.location.href = "/dashboard";
+                window.location.href = "/user-dashboard";
               } else {
                 // If no session, wait a bit longer and try one more time
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                window.location.href = "/dashboard";
+                window.location.href = "/user-dashboard";
               }
             } catch (error) {
               // If we can't verify the session, try the redirect anyway
-              window.location.href = "/dashboard";
+              window.location.href = "/user-dashboard";
             }
           } else {
             throw new Error("No session was created during sign up");
@@ -181,7 +181,7 @@ export default function SignUpPage() {
   // If user is already signed in, redirect to dashboard immediately
   useEffect(() => {
     if (authLoaded && existingUserId) {
-      window.location.href = "/dashboard";
+      window.location.href = "/user-dashboard";
     }
   }, [authLoaded, existingUserId]);
 

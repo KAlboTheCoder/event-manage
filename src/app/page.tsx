@@ -32,7 +32,7 @@ export default function HomePage() {
       });
 
       if (attemptSignIn.status === "complete") {
-        router.push("/dashboard");
+        router.push("/user-dashboard");
       } else {
         console.error("Sign in failed", attemptSignIn);
         setError("Sign in failed. Please check your credentials.");

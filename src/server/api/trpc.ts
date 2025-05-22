@@ -104,3 +104,9 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Protected (authenticated) procedure - currently just an alias for publicProcedure
+ * In a real app, you would add authentication checks here
+ */
+export const protectedProcedure = publicProcedure;
