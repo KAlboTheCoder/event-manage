@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useSignIn } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useSignIn, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import Navbar from "./_components/Navbar";
+import Navbar from "../../_components/Navbar";
 
-export default function HomePage() {
+export default function SignInPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, isLoaded } = useSignIn();
+  const { userId: existingUserId, isLoaded: authLoaded } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (authLoaded && existingUserId) {
+      // If user is already signed in, redirect to dashboard
+      router.replace("/dashboard");
+    }
+  }, [authLoaded, existingUserId, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,24 +34,49 @@ export default function HomePage() {
         throw new Error("User ID must be exactly 10 digits (numbers only)");
       }
 
+      // Use the email to sign in since that's what Clerk knows about
       const attemptSignIn = await signIn.create({
-        identifier: userId, // Use the UA ID directly as the identifier
+        strategy: "password",
+        identifier: password,
         password,
       });
 
       if (attemptSignIn.status === "complete") {
-        router.push("/dashboard");
+        // Check user role in your database
+        try {
+          const response = await fetch(`/api/users/role?userId=${userId}`);
+          const data = await response.json();
+          
+          if (data.role === 'admin') {
+            router.push("/dashboard");
+          } else {
+            router.push("/user-dashboard");
+          }
+        } catch (error) {
+          console.error("Error checking user role:", error);
+          router.push("/user-dashboard"); // Default to user dashboard if role check fails
+        }
       } else {
         console.error("Sign in failed", attemptSignIn);
         setError("Sign in failed. Please check your credentials.");
       }
     } catch (err: any) {
       console.error("Sign in error:", err);
-      setError(err?.errors?.[0]?.message || "Invalid UA ID or password");
+      setError(err?.errors?.[0]?.message || "Invalid User ID or password");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (authLoaded && existingUserId) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center bg-gradient-to-b from-blue-900 to-blue-800">
+        <div className="bg-white p-8 rounded-lg shadow-lg">
+          <p>You are already signed in. Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -51,7 +84,11 @@ export default function HomePage() {
       <div className="min-h-screen pt-16 flex items-center justify-center bg-gradient-to-b from-blue-900 to-blue-800">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
           <div className="flex justify-center mb-8">
-            <img src="/Img/UA-Logo.png" alt="UA Logo" className="w-32 h-32" />
+            <img
+              src="/Img/UA-Logo.png"
+              alt="UA Logo"
+              className="w-32 h-32"
+            />
           </div>
 
           {error && (
