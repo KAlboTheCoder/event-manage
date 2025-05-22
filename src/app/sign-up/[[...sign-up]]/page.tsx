@@ -16,7 +16,6 @@ export default function SignUpPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState("");
   const { signUp, isLoaded, setActive } = useSignUp();
   const { userId: existingUserId, isLoaded: authLoaded } = useAuth();
   const router = useRouter();
@@ -43,13 +42,9 @@ export default function SignUpPage() {
       setIsLoading(true);
       setError("");
 
-      // Validate UA ID format - must be exactly 10 digits
-      if (!/^\d{10}$/.test(userId)) {
-        throw new Error("User ID must be exactly 10 digits (numbers only)");
-      }
-
-      // Generate a username using the full user ID
-      const username = `u_${userId}`; // 'u_' prefix followed by the full user ID
+      // Generate a random username
+      const randomId = Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+      const username = `u_${randomId}`; // 'u_' prefix followed by a random ID
       
       // First check if a sign up exists and if so, continue with that
       const signUpAttempt = await signUp.create({
@@ -79,7 +74,6 @@ export default function SignUpPage() {
       // Store the current verification attempt
       sessionStorage.setItem('currentSignUpAttempt', JSON.stringify({
         email,
-        userId,
         firstName,
         lastName
       }));
@@ -123,10 +117,23 @@ export default function SignUpPage() {
           // Create user in our database after successful verification
           await createUser.mutateAsync({
             clerkId: completeSignUp.createdUserId,
-            userId,
             email,
             firstName,
             lastName,
+          });
+          
+          // Set the user's role in Clerk's metadata
+          await fetch('/api/users/set-metadata', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: completeSignUp.createdUserId,
+              publicMetadata: {
+                role: 'user' // Default role for new users
+              }
+            }),
           });
           
           if (completeSignUp.createdSessionId) {
@@ -145,7 +152,7 @@ export default function SignUpPage() {
               const session = await response.json();
               
               if (session && session.userId) {
-                // Session is confirmed, do the redirect
+                // Session is confirmed, redirect to user dashboard
                 window.location.href = "/user-dashboard";
               } else {
                 // If no session, wait a bit longer and try one more time
@@ -160,8 +167,8 @@ export default function SignUpPage() {
             throw new Error("No session was created during sign up");
           }
         } catch (error: any) {
-          if (error.message.includes("User ID already exists")) {
-            setError("This UA ID is already registered");
+          if (error.message.includes("Email already exists")) {
+            setError("This email is already registered");
           } else {
             console.error("Error during sign up completion:", error);
             setError("Failed to complete registration. Please try again.");
@@ -227,30 +234,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-black font-bold mb-2">USER ID</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={userId}
-                  onChange={(e) => {
-                    // Only allow digits, remove any other characters
-                    const value = e.target.value.replace(/\D/g, '');
-                    if (value.length <= 10) {
-                      setUserId(value);
-                    }
-                  }}
-                  pattern="\d{10}"
-                  maxLength={10}
-                  placeholder="Enter exactly 10 digits"
-                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                  disabled={isLoading}
-                  required
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Must be exactly 10 numbers (0-9 only)
-                </p>
-              </div>
+
 
               <div>
                 <label className="block text-black font-bold mb-2">EMAIL</label>

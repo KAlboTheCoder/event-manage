@@ -27,23 +27,7 @@ export default function Navbar() {
               <span className="font-semibold text-lg text-gray-800">Event Manager</span>
             </Link>
 
-            {/* Navigation Links - Only shown when logged in */}
-            {userId && (
-              <div className="hidden md:flex space-x-6">
-                <Link
-                  href="/dashboard"
-                  className="text-gray-600 hover:text-blue-800 font-medium transition-colors duration-200 px-2 py-1 rounded-md hover:bg-blue-50"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/events"
-                  className="text-gray-600 hover:text-blue-800 font-medium transition-colors duration-200 px-2 py-1 rounded-md hover:bg-blue-50"
-                >
-                  Events
-                </Link>
-              </div>
-            )}
+            {/* Navigation Links removed as requested */}
           </div>
 
           {/* Auth Buttons */}

@@ -6,14 +6,14 @@ import { eq } from 'drizzle-orm';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const email = searchParams.get('email');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.userId, userId),
+      where: eq(users.email, email),
     });
 
     if (!user) {

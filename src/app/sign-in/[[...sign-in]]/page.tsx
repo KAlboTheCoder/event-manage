@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useSignIn, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Navbar from "../../_components/Navbar";
+import Link from "next/link";
 
 export default function SignInPage() {
-  const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -30,45 +30,23 @@ export default function SignInPage() {
       setIsLoading(true);
       setError("");
 
-      // Validate UA ID format
-      if (!/^\d{10}$/.test(userId)) {
-        throw new Error("User ID must be exactly 10 digits (numbers only)");
-      }
-
-      // For Clerk, we need to use the email as the identifier
-      // In a real app, you would look up the email associated with the userId
-      // For now, we'll construct a dummy email from the userId
-      const emailToUse = email || `${userId}@ua.edu`;
-
-      // Use the email as the identifier for Clerk
       const attemptSignIn = await signIn.create({
         strategy: "password",
-        identifier: emailToUse,
+        identifier: email,
         password,
       });
 
       if (attemptSignIn.status === "complete") {
-        // Check user role in your database
-        try {
-          const response = await fetch(`/api/users/role?userId=${userId}`);
-          const data = await response.json();
-          
-          if (data.role === 'admin') {
-            router.push("/dashboard");
-          } else {
-            router.push("/user-dashboard");
-          }
-        } catch (error) {
-          console.error("Error checking user role:", error);
-          router.push("/user-dashboard"); // Default to user dashboard if role check fails
-        }
+        // Use direct window.location navigation instead of router.push to ensure proper middleware execution
+        // This bypasses client-side routing and forces a full page load with middleware evaluation
+        window.location.href = "/";
       } else {
         console.error("Sign in failed", attemptSignIn);
         setError("Sign in failed. Please check your credentials.");
       }
     } catch (err: any) {
       console.error("Sign in error:", err);
-      setError(err?.errors?.[0]?.message || "Invalid User ID or password");
+      setError(err?.errors?.[0]?.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
     }
@@ -105,21 +83,6 @@ export default function SignInPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="userId" className="block text-sm font-medium text-gray-700">
-                UA ID
-              </label>
-              <input
-                id="userId"
-                type="text"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter your 10-digit UA ID"
-                required
-              />
-            </div>
-
-            <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email Address
               </label>
@@ -154,6 +117,12 @@ export default function SignInPage() {
               {isLoading ? "Signing in..." : "LOGIN"}
             </button>
           </form>
+
+          <div className="mt-4 text-center">
+            <Link href="/sign-up" className="text-blue-600 hover:text-blue-800 text-sm">
+              Don't have an account? Sign up
+            </Link>
+          </div>
 
           <div className="mt-8 text-center space-y-2">
             <p className="font-bold">THE FORMATOR of</p>

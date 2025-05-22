@@ -30,8 +30,7 @@ export const users = createTable(
   "user",
   (d) => ({
     id: d.varchar("id").primaryKey(), // Clerk user ID
-    userId: d.varchar("user_id", { length: 10 }).notNull().unique(), // UA ID (10 digits)
-    email: d.varchar("email", { length: 256 }).notNull(),
+    email: d.varchar("email", { length: 256 }).notNull().unique(),
     firstName: d.varchar("first_name", { length: 256 }).notNull(),
     lastName: d.varchar("last_name", { length: 256 }).notNull(),
     role: d.varchar("role", { length: 10 }).default("user").notNull(), // 'admin' or 'user'
@@ -40,7 +39,6 @@ export const users = createTable(
       .notNull(),
   }),
   (table) => ({
-    userIdIdx: index("user_id_idx").on(table.userId),
     emailIdx: index("email_idx").on(table.email),
   }),
 );

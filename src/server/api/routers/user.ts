@@ -8,28 +8,26 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         clerkId: z.string(),
-        userId: z.string().length(10).regex(/^\d+$/, "Must be exactly 10 digits"),
         email: z.string().email(),
         firstName: z.string(),
         lastName: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if user ID already exists
+      // Check if email already exists
       const existingUser = await ctx.db
         .select()
         .from(users)
-        .where(eq(users.userId, input.userId))
+        .where(eq(users.email, input.email))
         .limit(1);
 
       if (existingUser.length > 0) {
-        throw new Error("User ID already exists");
+        throw new Error("Email already exists");
       }
 
       // Create new user
       await ctx.db.insert(users).values({
         id: input.clerkId,
-        userId: input.userId,
         email: input.email,
         firstName: input.firstName,
         lastName: input.lastName,
@@ -38,13 +36,13 @@ export const userRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  getByUserId: publicProcedure
+  getByClerkId: publicProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
       const user = await ctx.db
         .select()
         .from(users)
-        .where(eq(users.userId, input))
+        .where(eq(users.id, input))
         .limit(1);
 
       return user[0];
